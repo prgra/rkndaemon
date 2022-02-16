@@ -21,7 +21,6 @@ import (
 
 type Downloader struct {
 	SOAP *gosoap.Client
-	DB   *parser.DB
 }
 
 func New(endpoint string) (*Downloader, error) {
@@ -41,7 +40,6 @@ func New(endpoint string) (*Downloader, error) {
 	soap.Password, _ = u.User.Password()
 	return &Downloader{
 		SOAP: soap,
-		DB:   parser.NewDB(),
 	}, nil
 
 }
@@ -65,8 +63,8 @@ func findXMLInZipAndSave(b []byte) (fn string, err error) {
 			log.Println(err)
 			continue
 		}
-		fn = zipFile.Name
-		if strings.HasSuffix(fn, ".xml") {
+		if strings.HasSuffix(zipFile.Name, ".xml") {
+			fn = zipFile.Name
 			fmt.Println("found xml file", fn, ByteCountIEC(int64(zipFile.UncompressedSize64)))
 			f, err := os.Create(fn)
 			if err != nil {
@@ -158,6 +156,7 @@ func (d *Downloader) DumpDownloader(i time.Duration) {
 	dd, _ := LoadDumpDate()
 	log.Println("loaded dumpdate", dd, time.Unix(int64(dd/1000), 0))
 	for {
+		db := parser.NewDB()
 		if dd != 0 {
 			time.Sleep(i)
 		}
@@ -190,6 +189,13 @@ func (d *Downloader) DumpDownloader(i time.Duration) {
 		if err != nil {
 			panic(err)
 		}
-		d.DB.ReadDumpFile(fn)
+		err = db.ReadDumpFile(fn)
+		if err != nil {
+			log.Println("ReadDumpFile", err)
+		}
+		err = db.WriteFiles("output")
+		if err != nil {
+			log.Println("WriteFiles", err)
+		}
 	}
 }

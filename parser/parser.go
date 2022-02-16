@@ -4,6 +4,8 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
+	"io/fs"
+	"log"
 	"net"
 	"net/url"
 	"os"
@@ -53,6 +55,7 @@ func (l List) Add(s string) {
 }
 
 func (d *DB) ReadDumpFile(fn string) error {
+	log.Println("start read dumpfile")
 	xmlFile, err := os.Open(fn)
 	if err != nil {
 		return err
@@ -95,7 +98,8 @@ func (d *DB) ReadDumpFile(fn string) error {
 			d.parseEl(item)
 		}
 	}
-	d.WriteFiles("output")
+	log.Println("end read dumpfile")
+
 	return nil
 }
 
@@ -128,7 +132,10 @@ func (db *DB) parseEl(item content) {
 	case "ip":
 		for i := range item.IP {
 			db.URLs.Add(item.IP[i])
-			db.BlockedIPs.Add(item.IP[i])
+			ip := net.ParseIP(item.IP[i])
+			if ip.IsGlobalUnicast() {
+				db.BlockedIPs.Add(ip.String())
+			}
 		}
 	}
 	https := false
@@ -151,9 +158,13 @@ func (db *DB) parseEl(item content) {
 	}
 
 	for i := range item.IP {
-		db.AllIPs.Add(item.IP[i])
-		if https {
-			db.BlockedIPs.Add(item.IP[i])
+		ip := net.ParseIP(item.IP[i])
+		if ip.IsGlobalUnicast() {
+			db.BlockedIPs.Add(ip.String())
+			db.AllIPs.Add(item.IP[i])
+			if https {
+				db.BlockedIPs.Add(ip.String())
+			}
 		}
 	}
 	if item.BlockType != "domain-mask" {
@@ -165,7 +176,7 @@ func (db *DB) parseEl(item content) {
 			if err != nil {
 				continue
 			}
-			db.AllIPs.Add(u.String())
+			db.DomainMasks.Add(u.String())
 		}
 	}
 	for i := range item.IPSubnet {
@@ -174,14 +185,14 @@ func (db *DB) parseEl(item content) {
 }
 
 func (db *DB) WriteFiles(dir string) error {
+	log.Println("start write files")
+
 	f, err := os.Stat(dir)
-	if err != nil && err != os.ErrNotExist {
-		return err
-	}
-	if err != nil && err == os.ErrNotExist {
-		err := os.MkdirAll(dir, 0755)
-		if err != nil {
-			return err
+
+	if err != nil {
+		err2 := os.MkdirAll(dir, fs.ModeDir)
+		if err2 != nil {
+			return err2
 		}
 	}
 	if !f.IsDir() {
@@ -196,10 +207,12 @@ func (db *DB) WriteFiles(dir string) error {
 	if err != nil {
 		return err
 	}
-	err = db.URLs.WriteFile(fmt.Sprintf("%s/ips.txt", dir))
+	err = db.URLs.WriteFile(fmt.Sprintf("%s/urls.txt", dir))
 	if err != nil {
 		return err
 	}
+
+	log.Println("end write files")
 	return nil
 }
 
