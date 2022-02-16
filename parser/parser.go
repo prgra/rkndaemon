@@ -67,7 +67,6 @@ func (d *DB) ReadDumpFile(fn string) error {
 			return nil, fmt.Errorf("unknown charset: %s", charset)
 		}
 	}
-
 	for {
 		t, err := xmlDec.Token()
 
@@ -96,6 +95,7 @@ func (d *DB) ReadDumpFile(fn string) error {
 			d.parseEl(item)
 		}
 	}
+	d.WriteFiles("output")
 	return nil
 }
 
@@ -171,4 +171,50 @@ func (db *DB) parseEl(item content) {
 	for i := range item.IPSubnet {
 		db.Subnets.Add(item.IPSubnet[i])
 	}
+}
+
+func (db *DB) WriteFiles(dir string) error {
+	f, err := os.Stat(dir)
+	if err != nil && err != os.ErrNotExist {
+		return err
+	}
+	if err != nil && err == os.ErrNotExist {
+		err := os.MkdirAll(dir, 0755)
+		if err != nil {
+			return err
+		}
+	}
+	if !f.IsDir() {
+		return fmt.Errorf("file no dir")
+	}
+
+	err = db.AllIPs.WriteFile(fmt.Sprintf("%s/allips.txt", dir))
+	if err != nil {
+		return err
+	}
+	err = db.BlockedIPs.WriteFile(fmt.Sprintf("%s/ips.txt", dir))
+	if err != nil {
+		return err
+	}
+	err = db.URLs.WriteFile(fmt.Sprintf("%s/ips.txt", dir))
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (l List) WriteFilef(format string, fn string) error {
+	f, err := os.Create(fn)
+	if err != nil {
+		return nil
+	}
+	for k := range l {
+		fmt.Fprintf(f, format, k)
+	}
+	f.Close()
+	return nil
+}
+
+func (l List) WriteFile(fn string) error {
+	return l.WriteFilef("%s\n", fn)
 }

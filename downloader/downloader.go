@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"rkndelta/parser"
 	"strconv"
 	"strings"
 	"time"
@@ -20,6 +21,7 @@ import (
 
 type Downloader struct {
 	SOAP *gosoap.Client
+	DB   *parser.DB
 }
 
 func New(endpoint string) (*Downloader, error) {
@@ -39,7 +41,9 @@ func New(endpoint string) (*Downloader, error) {
 	soap.Password, _ = u.User.Password()
 	return &Downloader{
 		SOAP: soap,
+		DB:   parser.NewDB(),
 	}, nil
+
 }
 
 type GetdateRes struct {
@@ -51,36 +55,37 @@ type Resp struct {
 	Zip    []byte `xml:"registerZipArchive"`
 }
 
-func findXMLInZipAndSave(b []byte) error {
+func findXMLInZipAndSave(b []byte) (fn string, err error) {
 	zipReader, err := zip.NewReader(bytes.NewReader(b), int64(len(b)))
 	if err != nil {
-		return err
+		return "", err
 	}
 	for _, zipFile := range zipReader.File {
 		if err != nil {
 			log.Println(err)
 			continue
 		}
-		if strings.HasSuffix(zipFile.Name, ".xml") {
-			fmt.Println("found xml file", zipFile.Name, ByteCountIEC(int64(zipFile.UncompressedSize64)))
-			f, err := os.Create(zipFile.Name)
+		fn = zipFile.Name
+		if strings.HasSuffix(fn, ".xml") {
+			fmt.Println("found xml file", fn, ByteCountIEC(int64(zipFile.UncompressedSize64)))
+			f, err := os.Create(fn)
 			if err != nil {
-				return err
+				return "", err
 			}
 			unzippedFileBytes, err := readZipFile(zipFile)
 			if err != nil {
-				return err
+				return "", err
 
 			}
 			r := bytes.NewReader(unzippedFileBytes)
 			_, err = io.Copy(f, r)
 			if err != nil {
-				return err
+				return "", err
 			}
 			f.Close()
 		}
 	}
-	return nil
+	return fn, nil
 }
 
 func readZipFile(zf *zip.File) ([]byte, error) {
@@ -106,7 +111,7 @@ func ByteCountIEC(b int64) string {
 		float64(b)/float64(div), "KMGTPE"[exp])
 }
 
-func (d *Downloader) SocilDownloader(i time.Duration) {
+func (d *Downloader) SocialDownloader(i time.Duration) {
 	for {
 		res, err := d.SOAP.Call("getResultSocResources", gosoap.Params{})
 		if err != nil {
@@ -118,7 +123,7 @@ func (d *Downloader) SocilDownloader(i time.Duration) {
 		if err != nil {
 			panic(err)
 		}
-		err = findXMLInZipAndSave(b)
+		_, err = findXMLInZipAndSave(b)
 		if err != nil {
 			panic(err)
 		}
@@ -181,9 +186,10 @@ func (d *Downloader) DumpDownloader(i time.Duration) {
 		if err != nil {
 			panic(err)
 		}
-		err = findXMLInZipAndSave(b)
+		fn, err := findXMLInZipAndSave(b)
 		if err != nil {
 			panic(err)
 		}
+		d.DB.ReadDumpFile(fn)
 	}
 }
