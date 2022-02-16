@@ -195,7 +195,8 @@ func (db *DB) WriteFiles(dir string) error {
 			return err2
 		}
 	}
-	if !f.IsDir() {
+
+	if err == nil && !f.IsDir() {
 		return fmt.Errorf("file no dir")
 	}
 
