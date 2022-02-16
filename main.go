@@ -31,6 +31,6 @@ func main() {
 		log.Fatalf("cant't create downloader: %v", err)
 	}
 	go d.DumpDownloader(time.Duration(dumpinterval) * time.Minute)
-	d.SocilDownloader(time.Duration(socinterval) * time.Minute)
+	d.SocialDownloader(time.Duration(socinterval) * time.Minute)
 
 }
