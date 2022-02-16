@@ -4,6 +4,7 @@ import (
 	"log"
 	"net"
 	"net/url"
+	"rkndelta/parser"
 	"sync"
 
 	"github.com/bogdanovich/dns_resolver"
@@ -13,6 +14,7 @@ type Resolver struct {
 	inChan      chan url.URL
 	outChan     chan []net.IP
 	waitGroup   *sync.WaitGroup
+	writerWG    *sync.WaitGroup
 	dnsResolver *dns_resolver.DnsResolver
 }
 
@@ -70,4 +72,34 @@ func (r Resolver) worker() {
 
 		r.outChan <- res
 	}
+}
+
+func (r *Resolver) Run(workerCount int, fn string) {
+	r.waitGroup.Add(workerCount)
+	r.writerWG.Add(1)
+	go r.WriteToFile(fn)
+	for i := 0; i < workerCount; i++ {
+		go r.worker()
+	}
+}
+func (r *Resolver) Close() {
+	close(r.inChan)
+	r.waitGroup.Wait()
+	close(r.outChan)
+	r.writerWG.Wait()
+}
+
+func (r *Resolver) WriteToFile(fn string) {
+	list := make(parser.List)
+	for {
+		ips, ok := <-r.outChan
+		if !ok {
+			break
+		}
+		for i := range ips {
+			list.Add(ips[i].String())
+		}
+	}
+	list.WriteFile(fn)
+	r.writerWG.Done()
 }
