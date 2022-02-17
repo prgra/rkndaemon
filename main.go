@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"rkndelta/daemon"
 	"strconv"
+
+	"github.com/prgra/rkndaemon/daemon"
 )
 
 const (

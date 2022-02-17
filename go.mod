@@ -1,10 +1,9 @@
-module rkndelta
+module github.com/prgra/rkndaemon
 
 go 1.17
 
 require (
 	github.com/bogdanovich/dns_resolver v0.0.0-20170211073258-a8e42bc6a5b6
-	github.com/davecgh/go-spew v1.1.1
 	github.com/tiaguinho/gosoap v1.4.4
 	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd
 	golang.org/x/text v0.3.7

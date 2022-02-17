@@ -4,9 +4,10 @@ import (
 	"log"
 	"net"
 	"net/url"
-	"rkndelta/parser"
 	"strings"
 	"sync"
+
+	"github.com/prgra/rkndaemon/parser"
 
 	"github.com/bogdanovich/dns_resolver"
 )

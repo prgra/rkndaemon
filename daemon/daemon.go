@@ -9,11 +9,12 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
-	"rkndelta/downloader"
-	"rkndelta/parser"
-	"rkndelta/resolver"
 	"strings"
 	"time"
+
+	"github.com/prgra/rkndaemon/downloader"
+	"github.com/prgra/rkndaemon/parser"
+	"github.com/prgra/rkndaemon/resolver"
 
 	"github.com/tiaguinho/gosoap"
 	"golang.org/x/text/encoding/charmap"
