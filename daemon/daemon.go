@@ -31,6 +31,7 @@ func New(c Config) (a *App, err error) {
 	return &App{
 		Downloader: dwn,
 		Resolver:   res,
+		Config:     c,
 	}, nil
 }
 
