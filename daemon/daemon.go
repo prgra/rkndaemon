@@ -8,9 +8,11 @@ import (
 	"log"
 	"net/url"
 	"os"
+	"os/exec"
 	"rkndelta/downloader"
 	"rkndelta/parser"
 	"rkndelta/resolver"
+	"strings"
 	"time"
 
 	"github.com/tiaguinho/gosoap"
@@ -31,6 +33,7 @@ type Config struct {
 	ResolverFile   string
 	SocialInterval int
 	DumpInterval   int
+	PostScript     string
 }
 
 func New(c Config) (a *App, err error) {
@@ -147,6 +150,15 @@ func (a *App) DumpDownloader(i time.Duration) {
 			log.Println("WriteFiles", err)
 		}
 		a.Resolve()
+		if a.Config.PostScript != "" &&
+			strings.IndexAny(a.Config.PostScript, "|;`*?") == -1 {
+			cmd := exec.Command(a.Config.PostScript)
+			out, err := cmd.CombinedOutput()
+			if err != nil {
+				log.Println("PostScript", err)
+			}
+			log.Println("PostScript", string(out))
+		}
 	}
 }
 

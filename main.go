@@ -32,6 +32,7 @@ func main() {
 		ResolverFile:   "output/resolved.txt",
 		SocialInterval: socinterval,
 		DumpInterval:   dumpinterval,
+		PostScript:     "./postscript.sh",
 	})
 	if err != nil {
 		log.Fatalf("cant't create daemon: %v", err)
