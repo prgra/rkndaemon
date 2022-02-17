@@ -3,7 +3,6 @@ package parser
 import (
 	"encoding/xml"
 	"fmt"
-	"io"
 	"io/fs"
 	"log"
 	"net"
@@ -11,10 +10,9 @@ import (
 	"os"
 
 	"golang.org/x/net/idna"
-	"golang.org/x/text/encoding/charmap"
 )
 
-type content struct {
+type Content struct {
 	XMLName    xml.Name `xml:"content"`
 	Domain     []string `xml:"domain"`
 	IP         []string `xml:"ip"`
@@ -54,56 +52,7 @@ func (l List) Add(s string) {
 	l[s] = true
 }
 
-func (d *DB) ReadDumpFile(fn string) error {
-	log.Println("start read dumpfile")
-	xmlFile, err := os.Open(fn)
-	if err != nil {
-		return err
-	}
-	defer xmlFile.Close()
-	xmlDec := xml.NewDecoder(xmlFile)
-	xmlDec.CharsetReader = func(charset string, input io.Reader) (io.Reader, error) {
-		switch charset {
-		case "windows-1251":
-			return charmap.Windows1251.NewDecoder().Reader(input), nil
-		default:
-			return nil, fmt.Errorf("unknown charset: %s", charset)
-		}
-	}
-	for {
-		t, err := xmlDec.Token()
-
-		if t == nil {
-			break
-		}
-		if err != nil {
-			return err
-		}
-		switch se := t.(type) {
-		case xml.StartElement:
-			var item content
-			err = xmlDec.DecodeElement(&item, &se)
-			if err != nil &&
-				err.Error() != "expected element type <content> but have <register>" {
-				fmt.Fprintln(os.Stderr, err)
-			}
-			for i := range se.Attr {
-				if se.Attr[i].Name.Local == "entryType" {
-					item.EntityType = se.Attr[i].Value
-				}
-				if se.Attr[i].Name.Local == "blockType" {
-					item.BlockType = se.Attr[i].Value
-				}
-			}
-			d.parseEl(item)
-		}
-	}
-	log.Println("end read dumpfile")
-
-	return nil
-}
-
-func (db *DB) parseEl(item content) {
+func (db *DB) ParseEl(item Content) {
 
 	switch item.BlockType {
 	case "domain-mask":

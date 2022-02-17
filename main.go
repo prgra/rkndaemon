@@ -27,7 +27,7 @@ func main() {
 	}
 	app, err := daemon.New(daemon.Config{
 		KknURL:         fmt.Sprintf("%s://%s:%s@%s", RknScheme, user, pass, RknURL),
-		WorkerCount:    8,
+		WorkerCount:    128,
 		DNSServers:     []string{"8.8.8.8", "1.1.1.1"},
 		ResolverFile:   "output/resolved.txt",
 		SocialInterval: socinterval,

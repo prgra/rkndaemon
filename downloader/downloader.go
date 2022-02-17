@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"rkndelta/parser"
 	"strconv"
 	"strings"
 	"time"
@@ -53,7 +52,7 @@ type Resp struct {
 	Zip    []byte `xml:"registerZipArchive"`
 }
 
-func findXMLInZipAndSave(b []byte) (fn string, err error) {
+func FindXMLInZipAndSave(b []byte) (fn string, err error) {
 	zipReader, err := zip.NewReader(bytes.NewReader(b), int64(len(b)))
 	if err != nil {
 		return "", err
@@ -121,7 +120,7 @@ func (d *Downloader) SocialDownloader(i time.Duration) {
 		if err != nil {
 			panic(err)
 		}
-		_, err = findXMLInZipAndSave(b)
+		_, err = FindXMLInZipAndSave(b)
 		if err != nil {
 			panic(err)
 		}
@@ -150,52 +149,4 @@ func LoadDumpDate() (d int, err error) {
 	}
 	d, err = strconv.Atoi(string(b))
 	return d, err
-}
-
-func (d *Downloader) DumpDownloader(i time.Duration) {
-	dd, _ := LoadDumpDate()
-	log.Println("loaded dumpdate", dd, time.Unix(int64(dd/1000), 0))
-	for {
-		db := parser.NewDB()
-		if dd != 0 {
-			time.Sleep(i)
-		}
-		res, err := d.SOAP.Call("getLastDumpDate", nil)
-		if err != nil {
-			log.Fatalf("Call error: %s", err)
-		}
-		var rd GetdateRes
-		res.Unmarshal(&rd)
-		log.Println("got dump date", rd.Date)
-		if rd.Date == dd {
-			continue
-		}
-		dd = rd.Date
-		err = SaveDumpDate(dd)
-		if err != nil {
-			panic(err)
-		}
-		res, err = d.SOAP.Call("getResult", gosoap.Params{})
-		if err != nil {
-			log.Fatalf("aaaaaa error: %s", err)
-		}
-		var r Resp
-		res.Unmarshal(&r)
-		b, err := base64.StdEncoding.DecodeString(string(r.Zip))
-		if err != nil {
-			panic(err)
-		}
-		fn, err := findXMLInZipAndSave(b)
-		if err != nil {
-			panic(err)
-		}
-		err = db.ReadDumpFile(fn)
-		if err != nil {
-			log.Println("ReadDumpFile", err)
-		}
-		err = db.WriteFiles("output")
-		if err != nil {
-			log.Println("WriteFiles", err)
-		}
-	}
 }

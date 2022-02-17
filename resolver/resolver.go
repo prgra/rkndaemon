@@ -5,13 +5,14 @@ import (
 	"net"
 	"net/url"
 	"rkndelta/parser"
+	"strings"
 	"sync"
 
 	"github.com/bogdanovich/dns_resolver"
 )
 
 type Resolver struct {
-	inChan      chan url.URL
+	inChan      chan *url.URL
 	outChan     chan []net.IP
 	waitGroup   *sync.WaitGroup
 	writerWG    *sync.WaitGroup
@@ -24,7 +25,7 @@ func New(dnsservers []string) *Resolver {
 	var mwg sync.WaitGroup
 	var wwg sync.WaitGroup
 	return &Resolver{
-		inChan:      make(chan url.URL, 1000),
+		inChan:      make(chan *url.URL, 1000),
 		outChan:     make(chan []net.IP),
 		dnsResolver: dnsresolver,
 		writerWG:    &wwg,
@@ -32,7 +33,7 @@ func New(dnsservers []string) *Resolver {
 	}
 }
 
-func (r Resolver) AddToQueue(url url.URL) {
+func (r Resolver) AddToQueue(url *url.URL) {
 	r.inChan <- url
 }
 
@@ -43,9 +44,12 @@ func (r Resolver) worker() {
 			r.waitGroup.Done()
 			return
 		}
+		if dom.Hostname() == "" {
+			continue
+		}
 		ips, err := r.dnsResolver.LookupHost(dom.Hostname())
 		if err != nil {
-			log.Println("LookupHost", err)
+			// log.Println("LookupHost", err)
 
 		}
 		ipsmap := make(map[string]bool)
@@ -56,14 +60,14 @@ func (r Resolver) worker() {
 		}
 
 		ips2, err := net.LookupHost(dom.Hostname())
-		if err != nil {
+		if err != nil && !strings.HasSuffix(err.Error(), "no such host") {
 			log.Println("net.LookupHost", err)
 		}
 
 		for i := range ips2 {
 			a := net.ParseIP(ips2[i])
 			if a.To4() != nil {
-				ipsmap[ips[i].String()] = true
+				ipsmap[ips2[i]] = true
 			}
 		}
 		var res []net.IP
