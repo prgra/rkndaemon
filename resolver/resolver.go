@@ -21,10 +21,14 @@ type Resolver struct {
 func New(dnsservers []string) *Resolver {
 	dnsresolver := dns_resolver.New(dnsservers)
 	dnsresolver.RetryTimes = 3
+	var mwg sync.WaitGroup
+	var wwg sync.WaitGroup
 	return &Resolver{
 		inChan:      make(chan url.URL, 1000),
 		outChan:     make(chan []net.IP),
 		dnsResolver: dnsresolver,
+		writerWG:    &wwg,
+		waitGroup:   &mwg,
 	}
 }
 
