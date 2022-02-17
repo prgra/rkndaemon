@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"rkndelta/downloader"
+	"rkndelta/daemon"
 	"strconv"
-	"time"
 )
 
 const (
@@ -26,11 +25,17 @@ func main() {
 	if socinterval == 0 {
 		socinterval = 60
 	}
-	d, err := downloader.New(fmt.Sprintf("%s://%s:%s@%s", RknScheme, user, pass, RknURL))
+	app, err := daemon.New(daemon.Config{
+		KknURL:         fmt.Sprintf("%s://%s:%s@%s", RknScheme, user, pass, RknURL),
+		WorkerCount:    8,
+		DNSServers:     []string{"8.8.8.8", "1.1.1.1"},
+		ResolverFile:   "output/resolved.txt",
+		SocialInterval: socinterval,
+		DumpInterval:   dumpinterval,
+	})
 	if err != nil {
-		log.Fatalf("cant't create downloader: %v", err)
+		log.Fatalf("cant't create daemon: %v", err)
 	}
-	go d.DumpDownloader(time.Duration(dumpinterval) * time.Minute)
-	d.SocialDownloader(time.Duration(socinterval) * time.Minute)
+	app.Run()
 
 }
