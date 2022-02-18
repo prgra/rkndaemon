@@ -32,19 +32,19 @@ type App struct {
 }
 
 type Config struct {
-	URL            string   `default:"http://vigruzki2.rkn.gov.ru/services/OperatorRequest2/?wsdl" toml:"rknurl"`
-	User           string   `toml:"rknuser"`
-	Pass           string   `toml:"rknpass"`
-	DNSServers     []string `default:"[8.8.8.8],[1.1.1.1]" toml:"dnses"`
-	WorkerCount    int      `default:"64" toml:"dnsworkers"`
-	ResolverFile   string   `default:"output/resolved.txt" toml:"resolvfile"`
-	SocialInterval int      `default:"60" toml:"socinterval"`
-	DumpInterval   int      `default:"5" toml:"dumpinterval"`
-	PostScript     string   `toml:"postscript"`
-	SocialScript   string   `toml:"socialscript"`
-	UseDump        bool     `default:"true" toml:"usedump"`
-	UseSoc         bool     `default:"true" toml:"usesoc"`
-	UseResolver    bool     `default:"false" toml:"useresolver"`
+	URL            string   `default:"http://vigruzki2.rkn.gov.ru/services/OperatorRequest2/?wsdl" toml:"rknurl" env:"URL"`
+	User           string   `toml:"rknuser" env:"USER"`
+	Pass           string   `toml:"rknpass" env:"PASS"`
+	DNSServers     []string `default:"[8.8.8.8],[1.1.1.1]" toml:"dnses" env:"DNSSERVERS"`
+	WorkerCount    int      `default:"64" toml:"dnsworkers" env:"WORKERCOUNT"`
+	ResolverFile   string   `default:"output/resolved.txt" toml:"resolvfile" env:"RESOLVERFILE"`
+	SocialInterval int      `default:"60" toml:"socinterval" env:"SOCIALINTERVAL"`
+	DumpInterval   int      `default:"5" toml:"dumpinterval" env:"DUMPINTERVAL"`
+	PostScript     string   `toml:"postscript" env:"POSTSCRIPT"`
+	SocialScript   string   `toml:"socialscript" env:"SOCIALSCRIPT"`
+	UseDump        bool     `default:"true" toml:"usedump" env:"USEDUMP"`
+	UseSoc         bool     `default:"true" toml:"usesoc" env:"USESOC"`
+	UseResolver    bool     `default:"false" toml:"useresolver" env:"USERESOLVER"`
 }
 
 // Load configuration
@@ -63,6 +63,9 @@ func (c *Config) Load() error {
 	err := loader.Load()
 	if err != nil {
 		return err
+	}
+	if c.User == "" || c.Pass == "" {
+		return fmt.Errorf("need user and password params")
 	}
 	preu, err := url.Parse(c.URL)
 	if err != nil {
