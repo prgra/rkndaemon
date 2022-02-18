@@ -4,15 +4,24 @@
 Поддерживает DNS резолвинг доменов для дальнейшей блокировки их по IP.
 
 Запускается как демон, постоянно висит в памяти и проверяет наличие обновлений в РКН.
-Для доступа к выгрузке нужен логин/пароль от сайта РКН, еще необходимо в личном кабинете указать IP адрес с которого будет выгрузка.
+Для доступа к выгрузке нужен логин/пароль от сайта РКН, необходимо в личном кабинете указать IP адрес с которого будет выгрузка.
+
+## выгрузка социально значимых сайтов
+
+в директории output
+
+`SocDomais.txt`
+
+`SocNets.txt`
 
 
-установка:
+
+### установка:
 
 `go install github.com/prgra/rkndaemon@latest`
 
 
-запуск:
+### запуск:
 
 ```bash
 RKN_USER=4433221100 RKN_PASS=password rkndaemon
@@ -20,10 +29,12 @@ RKN_USER=4433221100 RKN_PASS=password rkndaemon
 
 конфигурационный файл `rkndaemon.toml` должен находиться в директории с программой либо в `/etc/rkndaemon.toml`
 
+настройки по умолчанию:
+
 ```toml
 	rknurl = "http://vigruzki2.rkn.gov.ru/services/OperatorRequest2/?wsdl"
-	rknuser = "4433221100"
-	rknpass = "password"
+	rknuser = ""
+	rknpass = ""
 	dnses = ["8.8.8.8", "1.1.1.1"]
 	dnsworkers = 64
 	resolvfile = "output/resolved.txt"
