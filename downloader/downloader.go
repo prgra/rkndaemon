@@ -3,7 +3,6 @@ package downloader
 import (
 	"archive/zip"
 	"bytes"
-	"encoding/base64"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -106,26 +105,6 @@ func ByteCountIEC(b int64) string {
 	}
 	return fmt.Sprintf("%.1f %ciB",
 		float64(b)/float64(div), "KMGTPE"[exp])
-}
-
-func (d *Downloader) SocialDownloader(i time.Duration) {
-	for {
-		res, err := d.SOAP.Call("getResultSocResources", gosoap.Params{})
-		if err != nil {
-			log.Fatalf("aaaaaa error: %s", err)
-		}
-		var r Resp
-		res.Unmarshal(&r)
-		b, err := base64.StdEncoding.DecodeString(string(r.Zip))
-		if err != nil {
-			panic(err)
-		}
-		_, err = FindXMLInZipAndSave(b)
-		if err != nil {
-			panic(err)
-		}
-		time.Sleep(i)
-	}
 }
 
 func SaveDumpDate(d int) error {

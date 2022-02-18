@@ -33,6 +33,8 @@ type DB struct {
 	DomainMasks List
 	Domains     List
 	Subnets     List
+	SocNets     List
+	SocDomains  List
 }
 
 func NewDB() *DB {
@@ -45,11 +47,19 @@ func NewDB() *DB {
 		DomainMasks: make(List),
 		Domains:     make(List),
 		Subnets:     make(List),
+		SocNets:     make(List),
+		SocDomains:  make(List),
 	}
 }
 
 func (l List) Add(s string) {
 	l[s] = true
+}
+func (db *DB) ParseSoc(item SocRecord) {
+	db.SocDomains.Add(item.Domain)
+	for i := range item.Subnets {
+		db.SocNets.Add(item.Subnets[i])
+	}
 }
 
 func (db *DB) ParseEl(item Content) {
@@ -161,8 +171,33 @@ func (db *DB) WriteFiles(dir string) error {
 	if err != nil {
 		return err
 	}
-
 	log.Println("end write files")
+	return nil
+}
+
+func (db *DB) WriteSocialFiles(dir string) error {
+	log.Println("start write social files")
+
+	f, err := os.Stat(dir)
+
+	if err != nil {
+		err2 := os.MkdirAll(dir, fs.ModeDir)
+		if err2 != nil {
+			return err2
+		}
+	}
+
+	if err == nil && !f.IsDir() {
+		return fmt.Errorf("file no dir")
+	}
+	err = db.SocNets.WriteFile(fmt.Sprintf("%s/SocNets.txt", dir))
+	if err != nil {
+		return err
+	}
+	err = db.SocDomains.WriteFile(fmt.Sprintf("%s/SocDomains.txt", dir))
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

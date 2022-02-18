@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 	"time"
 
@@ -54,7 +55,7 @@ func New(c Config) (a *App, err error) {
 
 func (a *App) Run() {
 	go a.DumpDownloader(time.Duration(a.Config.DumpInterval) * time.Minute)
-	a.Downloader.SocialDownloader(time.Duration(a.Config.SocialInterval) * time.Minute)
+	a.SocialDownloader(time.Duration(a.Config.SocialInterval) * time.Minute)
 }
 
 func (a *App) ReadDumpFile(fn string) error {
@@ -103,6 +104,53 @@ func (a *App) ReadDumpFile(fn string) error {
 	}
 	log.Println("end read dumpfile")
 
+	return nil
+}
+
+func (a *App) ReadSocialFile(fn string) error {
+	log.Println("start read social")
+	xmlFile, err := os.Open(fn)
+	if err != nil {
+		return err
+	}
+	defer xmlFile.Close()
+	xmlDec := xml.NewDecoder(xmlFile)
+	for {
+		t, err := xmlDec.Token()
+
+		if t == nil {
+			break
+		}
+		if err != nil {
+			return err
+		}
+		switch se := t.(type) {
+		case xml.StartElement:
+			var item parser.SocRecord
+			err = xmlDec.DecodeElement(&item, &se)
+			if err != nil &&
+				err.Error() != "expected element type <content> but have <registerSocResources>" {
+				fmt.Fprintln(os.Stderr, err)
+			}
+			for i := range se.Attr {
+				// id="2" hash="ffdb3ec46de4883efd3c1ca99d7c0ee0" includeTime="2022-01-26T22:00:00+03:00"
+
+				if se.Attr[i].Name.Local == "id" {
+					item.ID, _ = strconv.Atoi(se.Attr[i].Value)
+				}
+				if se.Attr[i].Name.Local == "hash" {
+					item.Hash = se.Attr[i].Value
+				}
+				if se.Attr[i].Name.Local == "includeTime" {
+					item.IncludeTime, _ = time.Parse("2006-01-02T15:04:05-07:00", se.Attr[i].Value)
+
+				}
+			}
+			a.Parser.ParseSoc(item)
+		}
+	}
+	a.Parser.WriteSocialFiles("output")
+	log.Println("end read social file")
 	return nil
 }
 
@@ -160,6 +208,30 @@ func (a *App) DumpDownloader(i time.Duration) {
 			}
 			log.Println("PostScript", string(out))
 		}
+	}
+}
+
+func (a *App) SocialDownloader(i time.Duration) {
+	for {
+		res, err := a.Downloader.SOAP.Call("getResultSocResources", gosoap.Params{})
+		if err != nil {
+			log.Fatalf("social download error: %s", err)
+		}
+		var r downloader.Resp
+		res.Unmarshal(&r)
+		b, err := base64.StdEncoding.DecodeString(string(r.Zip))
+		if err != nil {
+			log.Fatalf("socialDecodeString: %s", err)
+		}
+		fn, err := downloader.FindXMLInZipAndSave(b)
+		if err != nil {
+			log.Fatalf("socialFindXMLInZipAndSave: %s", err)
+		}
+		err = a.ReadSocialFile(fn)
+		if err != nil {
+			log.Fatalf("socialReadSocialFilee: %s", err)
+		}
+		time.Sleep(i)
 	}
 }
 
