@@ -4,3 +4,4 @@ register.xml
 output
 cmd/ipsetsync/ipsetsync
 rkndaemon
+rkndaemon.toml

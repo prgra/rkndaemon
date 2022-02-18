@@ -4,12 +4,15 @@ go 1.17
 
 require (
 	github.com/bogdanovich/dns_resolver v0.0.0-20170211073258-a8e42bc6a5b6
+	github.com/cristalhq/aconfig v0.16.8
+	github.com/cristalhq/aconfig/aconfigtoml v0.16.1
 	github.com/tiaguinho/gosoap v1.4.4
 	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd
 	golang.org/x/text v0.3.7
 )
 
 require (
+	github.com/BurntSushi/toml v0.3.1 // indirect
 	github.com/miekg/dns v1.1.46 // indirect
 	golang.org/x/mod v0.4.2 // indirect
 	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e // indirect

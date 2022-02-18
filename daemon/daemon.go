@@ -13,6 +13,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cristalhq/aconfig"
+	"github.com/cristalhq/aconfig/aconfigtoml"
 	"github.com/prgra/rkndaemon/downloader"
 	"github.com/prgra/rkndaemon/parser"
 	"github.com/prgra/rkndaemon/resolver"
@@ -29,18 +31,46 @@ type App struct {
 }
 
 type Config struct {
-	KknURL         string
-	DNSServers     []string
-	WorkerCount    int
-	ResolverFile   string
-	SocialInterval int
-	DumpInterval   int
-	PostScript     string
-	SocialScript   string
+	URL            string   `default:"http://vigruzki2.rkn.gov.ru/services/OperatorRequest2/?wsdl" toml:"rknurl"`
+	User           string   `toml:"rknuser"`
+	Pass           string   `toml:"rknpass"`
+	DNSServers     []string `default:"[8.8.8.8],[1.1.1.1]" toml:"dnses"`
+	WorkerCount    int      `default:"64" toml:"dnsworkers"`
+	ResolverFile   string   `default:"output/resolved.txt" toml:"resolvfile"`
+	SocialInterval int      `default:"60" toml:"socinterval"`
+	DumpInterval   int      `default:"5" toml:"dumpinterval"`
+	PostScript     string   `toml:"postscript"`
+	SocialScript   string   `toml:"socialscript"`
+}
+
+// Load configuration
+func (c *Config) Load() error {
+	loader := aconfig.LoaderFor(&c, aconfig.Config{
+		SkipFlags: true,
+		EnvPrefix: "RKN",
+		Files: []string{
+			"rkndaemon.toml",
+			"/etc/rkndaemon.toml",
+		},
+		FileDecoders: map[string]aconfig.FileDecoder{
+			".toml": aconfigtoml.New(),
+		},
+	})
+	err := loader.Load()
+	if err != nil {
+		return err
+	}
+	preu, err := url.Parse(c.URL)
+	if err != nil {
+		return err
+	}
+	u, _ := url.Parse(fmt.Sprintf("%s://%s:%s@%s%s?%s", preu.Scheme, c.User, c.Pass, preu.Host, preu.Path, preu.RawQuery))
+	c.URL = u.String()
+	return nil
 }
 
 func New(c Config) (a *App, err error) {
-	dwn, err := downloader.New(c.KknURL)
+	dwn, err := downloader.New(c.URL)
 	if err != nil {
 		return a, err
 	}

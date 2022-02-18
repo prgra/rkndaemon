@@ -1,5 +1,12 @@
+github.com/BurntSushi/toml v0.3.1 h1:WXkYYl6Yr3qBf1K79EBnL4mak0OimBfB0XUf9Vl28OQ=
+github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/bogdanovich/dns_resolver v0.0.0-20170211073258-a8e42bc6a5b6 h1:oV1V+uwP+sjmdSkvMxsl/l+HE+N8wbL49wCXZPel25M=
 github.com/bogdanovich/dns_resolver v0.0.0-20170211073258-a8e42bc6a5b6/go.mod h1:txOV61Nn+21z77KUMkNsp8lTHoOFTtqotltQAFenS9I=
+github.com/cristalhq/aconfig v0.16.1/go.mod h1:NXaRp+1e6bkO4dJn+wZ71xyaihMDYPtCSvEhMTm/H3E=
+github.com/cristalhq/aconfig v0.16.8 h1:lg8i0XHgfhvsnjNM5q/ou6jIHDRXlbBybjRP9t2fWuw=
+github.com/cristalhq/aconfig v0.16.8/go.mod h1:NXaRp+1e6bkO4dJn+wZ71xyaihMDYPtCSvEhMTm/H3E=
+github.com/cristalhq/aconfig/aconfigtoml v0.16.1 h1:q9DJfJqdLvZj7vL3bOIR6QM0ySpA0i6X8CZ8FNob6nc=
+github.com/cristalhq/aconfig/aconfigtoml v0.16.1/go.mod h1:VfRDnJBq09TZXiQdnnd4CBsNyj4s7AEDJlCxDSDt5DI=
 github.com/google/go-cmp v0.5.0 h1:/QaMHBdZ26BB3SSst0Iwl10Epc+xhTquomWX0oZEB6w=
 github.com/google/go-cmp v0.5.0/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/gNBxE=
 github.com/miekg/dns v1.1.46 h1:uzwpxRtSVxtcIZmz/4Uz6/Rn7G11DvsaslXoy5LxQio=
