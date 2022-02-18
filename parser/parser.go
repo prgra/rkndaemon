@@ -65,12 +65,6 @@ func (db *DB) ParseSoc(item SocRecord) {
 func (db *DB) ParseEl(item Content) {
 
 	switch item.BlockType {
-	case "domain-mask":
-		for i := range item.Domain {
-			d, _ := idna.ToASCII(item.Domain[i])
-			db.DomainMasks.Add(d)
-			db.DomainMasks.Add(item.Domain[i])
-		}
 	case "domain":
 		for i := range item.Domain {
 			db.URLs.Add(item.Domain[i])
@@ -171,6 +165,23 @@ func (db *DB) WriteFiles(dir string) error {
 	if err != nil {
 		return err
 	}
+	err = db.URLs.WriteFile(fmt.Sprintf("%s/urls.txt", dir))
+	if err != nil {
+		return err
+	}
+	err = db.Subnets.WriteFile(fmt.Sprintf("%s/subnets.txt", dir))
+	if err != nil {
+		return err
+	}
+	err = db.DomainMasks.WriteFile(fmt.Sprintf("%s/mdoms.txt", dir))
+	if err != nil {
+		return err
+	}
+	err = db.Domains.WriteFile(fmt.Sprintf("%s/domains.txt", dir))
+	if err != nil {
+		return err
+	}
+
 	log.Println("end write files")
 	return nil
 }
