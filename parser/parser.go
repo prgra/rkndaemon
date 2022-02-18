@@ -57,7 +57,9 @@ func (l List) Add(s string) {
 	l[s] = true
 }
 func (db *DB) ParseSoc(item SocRecord) {
-	db.SocDomains.Add(item.Domain)
+	if item.Domain != "" {
+		db.SocDomains.Add(item.Domain)
+	}
 	for i := range item.Subnets {
 		db.SocNets.Add(item.Subnets[i])
 	}
@@ -85,9 +87,9 @@ func (db *DB) ParseEl(item Content) {
 		}
 	case "ip":
 		for i := range item.IP {
-			db.URLs.Add(item.IP[i])
 			ip := net.ParseIP(item.IP[i])
 			if ip.IsGlobalUnicast() {
+				db.URLs.Add(ip.String())
 				db.BlockedIPs.Add(ip.String())
 			}
 		}
