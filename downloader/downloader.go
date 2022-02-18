@@ -56,6 +56,7 @@ func FindXMLInZipAndSave(b []byte) (fn string, err error) {
 	if err != nil {
 		return "", err
 	}
+	t := time.Now()
 	for _, zipFile := range zipReader.File {
 		if err != nil {
 			log.Println(err)
@@ -63,7 +64,7 @@ func FindXMLInZipAndSave(b []byte) (fn string, err error) {
 		}
 		if strings.HasSuffix(zipFile.Name, ".xml") {
 			fn = zipFile.Name
-			fmt.Println("found xml file", fn, ByteCountIEC(int64(zipFile.UncompressedSize64)))
+			log.Println("found xml file", fn, ByteCountIEC(int64(zipFile.UncompressedSize64)))
 			f, err := os.Create(fn)
 			if err != nil {
 				return "", err
@@ -79,6 +80,7 @@ func FindXMLInZipAndSave(b []byte) (fn string, err error) {
 				return "", err
 			}
 			f.Close()
+			log.Println("file extracted, time", time.Since(t).Truncate(time.Millisecond))
 		}
 	}
 	return fn, nil

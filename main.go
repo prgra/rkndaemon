@@ -34,6 +34,7 @@ func main() {
 		SocialInterval: socinterval,
 		DumpInterval:   dumpinterval,
 		PostScript:     "./postscript.sh",
+		SocialScript:   "./social.sh",
 	})
 	if err != nil {
 		log.Fatalf("cant't create daemon: %v", err)

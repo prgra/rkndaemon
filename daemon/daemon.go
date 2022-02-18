@@ -36,6 +36,7 @@ type Config struct {
 	SocialInterval int
 	DumpInterval   int
 	PostScript     string
+	SocialScript   string
 }
 
 func New(c Config) (a *App, err error) {
@@ -230,6 +231,16 @@ func (a *App) SocialDownloader(i time.Duration) {
 		err = a.ReadSocialFile(fn)
 		if err != nil {
 			log.Fatalf("socialReadSocialFilee: %s", err)
+		}
+
+		if a.Config.SocialScript != "" &&
+			strings.IndexAny(a.Config.SocialScript, "|;`*?") == -1 {
+			cmd := exec.Command(a.Config.SocialScript)
+			out, err := cmd.CombinedOutput()
+			if err != nil {
+				log.Println("SocialScript", err)
+			}
+			log.Println("SocialScript", string(out))
 		}
 		time.Sleep(i)
 	}
