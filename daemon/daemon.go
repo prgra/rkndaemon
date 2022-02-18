@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"os/signal"
 	"strconv"
 	"strings"
 	"time"
@@ -41,6 +42,9 @@ type Config struct {
 	DumpInterval   int      `default:"5" toml:"dumpinterval"`
 	PostScript     string   `toml:"postscript"`
 	SocialScript   string   `toml:"socialscript"`
+	UseDump        bool     `default:"true" toml:"usedump"`
+	UseSoc         bool     `default:"true" toml:"usesoc"`
+	UseResolver    bool     `default:"false" toml:"useresolver"`
 }
 
 // Load configuration
@@ -85,8 +89,16 @@ func New(c Config) (a *App, err error) {
 }
 
 func (a *App) Run() {
-	go a.DumpDownloader(time.Duration(a.Config.DumpInterval) * time.Minute)
-	a.SocialDownloader(time.Duration(a.Config.SocialInterval) * time.Minute)
+	if a.Config.UseDump {
+		go a.DumpDownloader(time.Duration(a.Config.DumpInterval) * time.Minute)
+	}
+	if a.Config.UseSoc {
+		go a.SocialDownloader(time.Duration(a.Config.SocialInterval) * time.Minute)
+	}
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	s := <-c
+	log.Println("Got signal:", s)
 }
 
 func (a *App) ReadDumpFile(fn string) error {
@@ -229,7 +241,10 @@ func (a *App) DumpDownloader(i time.Duration) {
 		if err != nil {
 			log.Println("WriteFiles", err)
 		}
-		a.Resolve()
+
+		if a.Config.UseResolver {
+			a.Resolve()
+		}
 		if a.Config.PostScript != "" &&
 			strings.IndexAny(a.Config.PostScript, "|;`*?") == -1 {
 			cmd := exec.Command(a.Config.PostScript)
