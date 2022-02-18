@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/url"
 	"os"
+	"sort"
 
 	"golang.org/x/net/idna"
 )
@@ -217,13 +218,22 @@ func (l List) WriteFilef(format string, fn string) error {
 	if err != nil {
 		return nil
 	}
+	var arr []string
 	for k := range l {
-		fmt.Fprintf(f, format, k)
+		arr = append(arr, k)
+	}
+	sort.Strings(arr)
+	rn := "\n"
+	for i := range arr {
+		if i == len(arr)-1 {
+			rn = ""
+		}
+		fmt.Fprintf(f, format+rn, arr[i])
 	}
 	f.Close()
 	return nil
 }
 
 func (l List) WriteFile(fn string) error {
-	return l.WriteFilef("%s\n", fn)
+	return l.WriteFilef("%s", fn)
 }
