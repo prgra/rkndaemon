@@ -5,3 +5,4 @@ output
 cmd/ipsetsync/ipsetsync
 rkndaemon
 rkndaemon.toml
+.DS_Store
