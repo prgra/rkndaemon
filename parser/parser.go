@@ -3,7 +3,6 @@ package parser
 import (
 	"encoding/xml"
 	"fmt"
-	"io/fs"
 	"log"
 	"net"
 	"net/url"
@@ -146,7 +145,7 @@ func (db *DB) WriteFiles(dir string) error {
 	f, err := os.Stat(dir)
 
 	if err != nil {
-		err2 := os.MkdirAll(dir, fs.ModeDir)
+		err2 := os.MkdirAll(dir, 755)
 		if err2 != nil {
 			return err2
 		}
@@ -195,7 +194,7 @@ func (db *DB) WriteSocialFiles(dir string) error {
 	f, err := os.Stat(dir)
 
 	if err != nil {
-		err2 := os.MkdirAll(dir, fs.ModeDir)
+		err2 := os.MkdirAll(dir, 755)
 		if err2 != nil {
 			return err2
 		}
