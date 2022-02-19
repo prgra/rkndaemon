@@ -1,0 +1,14 @@
+[Unit]
+Description=RKNDaemon
+After=network.target
+
+[Service]
+Type=simple
+User=rkndaemon
+Group=rkndaemon
+Restart=always
+WorkingDirectory=/opt/rkndaemon/
+ExecStart=/opt/bin/rkndaemon
+
+[Install]
+WantedBy=multi-user.target
