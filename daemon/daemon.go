@@ -9,9 +9,9 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
-	"os/signal"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/cristalhq/aconfig"
@@ -29,6 +29,7 @@ type App struct {
 	Resolver   *resolver.Resolver
 	Parser     *parser.DB
 	Config     Config
+	waitGroup  *sync.WaitGroup
 }
 
 type Config struct {
@@ -45,6 +46,7 @@ type Config struct {
 	UseDump        bool     `default:"true" toml:"usedump" env:"USEDUMP"`
 	UseSoc         bool     `default:"true" toml:"usesoc" env:"USESOC"`
 	UseResolver    bool     `default:"false" toml:"useresolver" env:"USERESOLVER"`
+	Cron           bool     `dafault:"false" toml:"cron" ENV:"CRON"`
 }
 
 // Load configuration
@@ -81,6 +83,7 @@ func New(c Config) (a *App, err error) {
 	if err != nil {
 		return a, err
 	}
+	var wg sync.WaitGroup
 	res := resolver.New(c.DNSServers)
 	res.Run(c.WorkerCount, c.ResolverFile)
 	return &App{
@@ -88,20 +91,20 @@ func New(c Config) (a *App, err error) {
 		Resolver:   res,
 		Parser:     parser.NewDB(),
 		Config:     c,
+		waitGroup:  &wg,
 	}, nil
 }
 
 func (a *App) Run() {
 	if a.Config.UseDump {
+		a.waitGroup.Add(1)
 		go a.DumpDownloader(time.Duration(a.Config.DumpInterval) * time.Minute)
 	}
 	if a.Config.UseSoc {
+		a.waitGroup.Add(1)
 		go a.SocialDownloader(time.Duration(a.Config.SocialInterval) * time.Minute)
 	}
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
-	s := <-c
-	log.Println("Got signal:", s)
+	a.waitGroup.Wait()
 }
 
 func (a *App) ReadDumpFile(fn string) error {
@@ -204,7 +207,7 @@ func (a *App) DumpDownloader(i time.Duration) {
 	dd, _ := downloader.LoadDumpDate()
 	log.Println("loaded dumpdate", dd, time.Unix(int64(dd/1000), 0))
 	for {
-		if dd != 0 {
+		if dd != 0 && !a.Config.Cron {
 			time.Sleep(i)
 		}
 		res, err := a.Downloader.SOAP.Call("getLastDumpDate", nil)
@@ -214,7 +217,7 @@ func (a *App) DumpDownloader(i time.Duration) {
 		var rd downloader.GetdateRes
 		res.Unmarshal(&rd)
 		log.Println("got dump date", rd.Date)
-		if rd.Date == dd {
+		if rd.Date == dd && !a.Config.Cron {
 			continue
 		}
 		dd = rd.Date
@@ -257,7 +260,12 @@ func (a *App) DumpDownloader(i time.Duration) {
 			}
 			log.Println("PostScript", string(out))
 		}
+		if a.Config.Cron {
+			fmt.Println("cron detected exit")
+			break
+		}
 	}
+	a.waitGroup.Done()
 }
 
 func (a *App) SocialDownloader(i time.Duration) {
@@ -290,8 +298,15 @@ func (a *App) SocialDownloader(i time.Duration) {
 			}
 			log.Println("SocialScript", string(out))
 		}
-		time.Sleep(i)
+		if !a.Config.Cron {
+			time.Sleep(i)
+		} else {
+			fmt.Println("social cron detected exit")
+			break
+		}
+
 	}
+	a.waitGroup.Done()
 }
 
 func (a *App) Resolve() {
