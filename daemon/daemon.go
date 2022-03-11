@@ -339,4 +339,6 @@ func (a *App) Resolve() {
 	}
 	a.Resolver.Close()
 	log.Println("end resolving")
+	a.Resolver = resolver.New(a.Config.DNSServers)
+	a.Resolver.Run(a.Config.WorkerCount, a.Config.ResolverFile)
 }
