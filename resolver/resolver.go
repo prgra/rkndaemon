@@ -26,7 +26,7 @@ func New(dnsservers []string) *Resolver {
 	var mwg sync.WaitGroup
 	var wwg sync.WaitGroup
 	return &Resolver{
-		inChan:      make(chan *url.URL, 1000),
+		inChan:      make(chan *url.URL),
 		outChan:     make(chan []net.IP),
 		dnsResolver: dnsresolver,
 		writerWG:    &wwg,
