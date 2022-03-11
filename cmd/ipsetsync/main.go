@@ -42,7 +42,7 @@ func main() {
 			ipsetIPs[ip.String()] = true
 		}
 	}
-	fmt.Println("loaded from ipset", len(ipsetIPs))
+	fmt.Printf("loaded from ipset %s %d records", os.Args[2], len(ipsetIPs))
 
 	cmd = exec.Command("ipset", "restore")
 	restPipe, err := cmd.StdinPipe()
