@@ -63,7 +63,8 @@ func (r Resolver) worker() {
 		ips2, err := net.LookupHost(dom.Hostname())
 		if err != nil &&
 			!strings.HasSuffix(err.Error(), "no such host") &&
-			!strings.HasSuffix(err.Error(), "server misbehaving") {
+			!strings.HasSuffix(err.Error(), "server misbehaving") &&
+			!strings.HasSuffix(err.Error(), "i/o timeout") {
 			log.Println("net.LookupHost", err)
 		}
 
