@@ -42,7 +42,7 @@ func main() {
 			ipsetIPs[ip.String()] = true
 		}
 	}
-	fmt.Printf("loaded from ipset %s %d records", os.Args[2], len(ipsetIPs))
+	fmt.Printf("loaded from ipset %s %d records\n", os.Args[2], len(ipsetIPs))
 
 	cmd = exec.Command("ipset", "restore")
 	restPipe, err := cmd.StdinPipe()
@@ -69,6 +69,23 @@ func main() {
 		log.Fatalln("read output problem", err)
 		fmt.Println("got output", string(out))
 	}
+
+	cmd = exec.Command("ipset", "-L", os.Args[2])
+	out, err = cmd.Output()
+	if err != nil {
+		log.Fatalln("cant read ipset", err)
+	}
+	strs = strings.Split(string(out), "\n")
+
+	ipsetIPs = make(map[string]bool)
+	for i := range strs {
+		ip := net.ParseIP(strs[i])
+		if ip.To4() != nil {
+			ipsetIPs[ip.String()] = true
+		}
+	}
+	fmt.Printf("after from ipset %s %d records\n", os.Args[2], len(ipsetIPs))
+
 }
 
 func usage() {
