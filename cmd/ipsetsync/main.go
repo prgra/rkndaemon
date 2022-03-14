@@ -15,6 +15,11 @@ func main() {
 		usage()
 		os.Exit(0)
 	}
+	clear := true
+	if strings.ToLower(os.Getenv("NOCLEAR")) == "true" ||
+		os.Getenv("NOCLEAR") == "1" {
+		clear = false
+	}
 	f, err := os.Open(os.Args[1])
 	if err != nil {
 		log.Fatalln("can't open file", err)
@@ -56,10 +61,12 @@ func main() {
 				fmt.Fprintf(restPipe, "add %s %s\n", os.Args[2], k)
 			}
 		}
-		for k := range ipsetIPs {
-			_, ok := fileIPs[k]
-			if !ok {
-				fmt.Fprintf(restPipe, "del %s %s\n", os.Args[2], k)
+		if clear {
+			for k := range ipsetIPs {
+				_, ok := fileIPs[k]
+				if !ok {
+					fmt.Fprintf(restPipe, "del %s %s\n", os.Args[2], k)
+				}
 			}
 		}
 		restPipe.Close()
