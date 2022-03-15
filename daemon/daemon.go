@@ -216,7 +216,7 @@ func (a *App) DumpDownloader(i time.Duration) {
 		}
 		var rd downloader.GetdateRes
 		res.Unmarshal(&rd)
-		log.Println("got dump date", rd.Date)
+		log.Println("got dump date", rd.Date, time.Unix(int64(dd/1000), 0))
 		if rd.Date == dd && !a.Config.Cron {
 			continue
 		}
