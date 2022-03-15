@@ -92,6 +92,13 @@ func (db *DB) ParseEl(item Content) {
 				db.BlockedIPs.Add(ip.String())
 			}
 		}
+	case "domain-mask":
+		for i := range item.Domain {
+			db.DomainMasks.Add(item.Domain[i])
+			d, _ := idna.ToASCII(item.Domain[i])
+			db.DomainMasks.Add(d)
+
+		}
 	}
 	https := false
 	for i := range item.URL {
@@ -122,18 +129,7 @@ func (db *DB) ParseEl(item Content) {
 			}
 		}
 	}
-	if item.BlockType != "domain-mask" {
-		for i := range item.Domain {
-			db.URLs.Add(item.Domain[i])
-			d, _ := idna.ToASCII(item.Domain[i])
-			db.URLs.Add(d)
-			u, err := url.Parse(item.Domain[i])
-			if err != nil {
-				continue
-			}
-			db.DomainMasks.Add(u.String())
-		}
-	}
+
 	for i := range item.IPSubnet {
 		db.Subnets.Add(item.IPSubnet[i])
 	}
