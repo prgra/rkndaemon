@@ -28,6 +28,7 @@ type DB struct {
 	WhiteIp     List
 	WhiteDomain List
 	AllIPs      List
+	HTTPSIPs    List
 	BlockedIPs  List
 	URLs        List
 	DomainMasks List
@@ -42,6 +43,7 @@ func NewDB() *DB {
 		WhiteIp:     make(List),
 		WhiteDomain: make(List),
 		AllIPs:      make(List),
+		HTTPSIPs:    make(List),
 		BlockedIPs:  make(List),
 		URLs:        make(List),
 		DomainMasks: make(List),
@@ -71,12 +73,11 @@ func (db *DB) ParseEl(item Content) {
 		for i := range item.Domain {
 			db.URLs.Add(item.Domain[i])
 			d, _ := idna.ToASCII(item.Domain[i])
-			db.URLs.Add(d)
+			db.Domains.Add(d)
 			u, err := url.Parse("http://" + item.Domain[i])
 			if err != nil {
 				continue
 			}
-			db.URLs.Add(u.String())
 			db.Domains.Add(u.Host)
 			d2, err := idna.ToASCII(u.Host)
 			if err != nil {
@@ -88,7 +89,6 @@ func (db *DB) ParseEl(item Content) {
 		for i := range item.IP {
 			ip := net.ParseIP(item.IP[i])
 			if ip.IsGlobalUnicast() {
-				db.URLs.Add(ip.String())
 				db.BlockedIPs.Add(ip.String())
 			}
 		}
@@ -122,10 +122,9 @@ func (db *DB) ParseEl(item Content) {
 	for i := range item.IP {
 		ip := net.ParseIP(item.IP[i])
 		if ip.IsGlobalUnicast() {
-			db.BlockedIPs.Add(ip.String())
 			db.AllIPs.Add(item.IP[i])
 			if https {
-				db.BlockedIPs.Add(ip.String())
+				db.HTTPSIPs.Add(ip.String())
 			}
 		}
 	}
@@ -233,4 +232,21 @@ func (l List) WriteFilef(format string, fn string) error {
 
 func (l List) WriteFile(fn string) error {
 	return l.WriteFilef("%s", fn)
+}
+
+func (l List) MixWriteFilef(format string, fn string, lists ...List) {
+	var newlist List
+	for k := range l {
+		newlist.Add(k)
+	}
+	for i := range lists {
+		for k := range lists[i] {
+			newlist.Add(k)
+		}
+	}
+	newlist.WriteFilef(format, fn)
+}
+
+func (l List) MixWriteFile(fn string, lists ...List) {
+	l.MixWriteFilef("%s", fn, lists...)
 }
