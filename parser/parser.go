@@ -235,7 +235,7 @@ func (l List) WriteFile(fn string) error {
 }
 
 func (l List) MixWriteFilef(format string, fn string, lists ...List) {
-	var newlist List
+	newlist := make(List)
 	for k := range l {
 		newlist.Add(k)
 	}
