@@ -71,7 +71,6 @@ func (db *DB) ParseEl(item Content) {
 	switch item.BlockType {
 	case "domain":
 		for i := range item.Domain {
-			db.URLs.Add(item.Domain[i])
 			d, _ := idna.ToASCII(item.Domain[i])
 			db.Domains.Add(d)
 			u, err := url.Parse("http://" + item.Domain[i])
@@ -95,20 +94,16 @@ func (db *DB) ParseEl(item Content) {
 	case "domain-mask":
 		for i := range item.Domain {
 			db.DomainMasks.Add(item.Domain[i])
-			d, _ := idna.ToASCII(item.Domain[i])
-			db.DomainMasks.Add(d)
-
 		}
 	}
 	https := false
 	for i := range item.URL {
-		db.URLs.Add(item.URL[i])
-		d, _ := idna.ToASCII(item.URL[i])
-		db.URLs.Add(d)
 		u, err := url.Parse(item.URL[i])
 		if err != nil {
 			continue
 		}
+		d, _ := idna.ToASCII(u.String())
+		db.URLs.Add(d)
 		mip := net.ParseIP(u.Host)
 		if mip.IsGlobalUnicast() {
 			db.AllIPs.Add(mip.String())
@@ -125,6 +120,10 @@ func (db *DB) ParseEl(item Content) {
 			db.AllIPs.Add(item.IP[i])
 			if https {
 				db.HTTPSIPs.Add(ip.String())
+			}
+			if item.BlockType == "domain-mask" ||
+				item.BlockType == "domain" {
+				db.BlockedIPs.Add(ip.String())
 			}
 		}
 	}
@@ -174,7 +173,11 @@ func (db *DB) WriteFiles(dir string) error {
 	if err != nil {
 		return err
 	}
-	err = db.Domains.WriteFile(fmt.Sprintf("%s/https_ips.txt", dir))
+	err = db.HTTPSIPs.WriteFile(fmt.Sprintf("%s/https_ips.txt", dir))
+	if err != nil {
+		return err
+	}
+	err = db.Domains.MixWriteFile(fmt.Sprintf("%s/all_domains.txt", dir), db.DomainMasks)
 	if err != nil {
 		return err
 	}
@@ -233,7 +236,7 @@ func (l List) WriteFile(fn string) error {
 	return l.WriteFilef("%s", fn)
 }
 
-func (l List) MixWriteFilef(format string, fn string, lists ...List) {
+func (l List) MixWriteFilef(format string, fn string, lists ...List) error {
 	newlist := make(List)
 	for k := range l {
 		newlist.Add(k)
@@ -243,9 +246,9 @@ func (l List) MixWriteFilef(format string, fn string, lists ...List) {
 			newlist.Add(k)
 		}
 	}
-	newlist.WriteFilef(format, fn)
+	return newlist.WriteFilef(format, fn)
 }
 
-func (l List) MixWriteFile(fn string, lists ...List) {
-	l.MixWriteFilef("%s", fn, lists...)
+func (l List) MixWriteFile(fn string, lists ...List) error {
+	return l.MixWriteFilef("%s", fn, lists...)
 }
