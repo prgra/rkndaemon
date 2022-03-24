@@ -154,11 +154,7 @@ func (db *DB) WriteFiles(dir string) error {
 	if err != nil {
 		return err
 	}
-	err = db.BlockedIPs.WriteFile(fmt.Sprintf("%s/ips.txt", dir))
-	if err != nil {
-		return err
-	}
-	err = db.URLs.WriteFile(fmt.Sprintf("%s/urls.txt", dir))
+	err = db.BlockedIPs.WriteFile(fmt.Sprintf("%s/bloked_ips.txt", dir))
 	if err != nil {
 		return err
 	}
@@ -178,7 +174,10 @@ func (db *DB) WriteFiles(dir string) error {
 	if err != nil {
 		return err
 	}
-
+	err = db.Domains.WriteFile(fmt.Sprintf("%s/https_ips.txt", dir))
+	if err != nil {
+		return err
+	}
 	log.Println("end write files")
 	return nil
 }
