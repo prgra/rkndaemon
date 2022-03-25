@@ -107,8 +107,15 @@ func (a *App) Run() {
 		a.waitGroup.Add(1)
 		go a.SocialDownloader(time.Duration(a.Config.SocialInterval) * time.Minute)
 	}
-	if a.Config.ListerHTTP != "" {
-		go http.ListenAndServe(a.Config.ListerHTTP, a.AuthMiddleware(http.FileServer(http.Dir("output"))))
+
+	if a.Config.ListerHTTP != "" && !a.Config.Cron {
+		go func() {
+			log.Println("start http server on")
+			err := http.ListenAndServe(a.Config.ListerHTTP, a.AuthMiddleware(http.FileServer(http.Dir("output"))))
+			if err != nil {
+				log.Fatalf("can't listen http %v", err)
+			}
+		}()
 	}
 	a.waitGroup.Wait()
 }
