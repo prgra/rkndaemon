@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net/http"
 	"net/url"
 	"os"
 	"os/exec"
@@ -47,6 +48,8 @@ type Config struct {
 	UseSoc         bool     `default:"true" toml:"usesoc" env:"USESOC"`
 	UseResolver    bool     `default:"false" toml:"useresolver" env:"USERESOLVER"`
 	Cron           bool     `dafault:"false" toml:"cron" ENV:"CRON"`
+	ListerHTTP     string   `default:"" toml:"listen" ENV:"LISTEN"`
+	HTTPToken      string   `default:"" toml:"httptoken" ENV:"HTTPTOKEN"`
 }
 
 // Load configuration
@@ -103,6 +106,9 @@ func (a *App) Run() {
 	if a.Config.UseSoc {
 		a.waitGroup.Add(1)
 		go a.SocialDownloader(time.Duration(a.Config.SocialInterval) * time.Minute)
+	}
+	if a.Config.ListerHTTP != "" {
+		go http.ListenAndServe(a.Config.ListerHTTP, http.FileServer(http.Dir("output")))
 	}
 	a.waitGroup.Wait()
 }
