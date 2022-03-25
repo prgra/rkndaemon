@@ -108,7 +108,7 @@ func (a *App) Run() {
 		go a.SocialDownloader(time.Duration(a.Config.SocialInterval) * time.Minute)
 	}
 	if a.Config.ListerHTTP != "" {
-		go http.ListenAndServe(a.Config.ListerHTTP, http.FileServer(http.Dir("output")))
+		go http.ListenAndServe(a.Config.ListerHTTP, a.AuthMiddleware(http.FileServer(http.Dir("output"))))
 	}
 	a.waitGroup.Wait()
 }
