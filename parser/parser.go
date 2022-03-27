@@ -113,10 +113,9 @@ func (db *DB) ParseEl(item Content) {
 		}
 		db.URLs.Add(u.String())
 
-		// двойное декодировние для кривых урлов
-		d1, _ := url.QueryUnescape(u.String())
-		d2, _ := url.QueryUnescape(d1)
-		db.URLs.Add(d2)
+		// для кривых урлов
+		db.URLs.Add(item.URL[i])
+
 	}
 
 	for i := range item.IP {
