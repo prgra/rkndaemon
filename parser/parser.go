@@ -124,6 +124,10 @@ func (db *DB) ParseEl(item Content) {
 		db.URLs.Add(JSDecodeURI(u.String()))
 		rstr := strings.ReplaceAll(u.String(), "%", "%25")
 		db.URLs.Add(rstr)
+		us1, _ := url.PathUnescape(u.String())
+		us, _ := url.PathUnescape(us1)
+		u2, _ := url.Parse(us)
+		db.URLs.Add(JSDecodeURI(u2.String()))
 
 	}
 
