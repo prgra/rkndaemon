@@ -94,7 +94,12 @@ func (db *DB) ParseEl(item Content) {
 		}
 	case "domain-mask":
 		for i := range item.Domain {
-			db.DomainMasks.Add(item.Domain[i])
+			sd := item.Domain[i]
+			db.DomainMasks.Add(sd)
+			if strings.HasPrefix(sd, "*.") {
+				d, _ := idna.ToASCII(strings.TrimPrefix(sd, ".*"))
+				db.DomainMasks.Add(d)
+			}
 		}
 	}
 	https := false
