@@ -127,7 +127,9 @@ func (db *DB) ParseEl(item Content) {
 		us1, _ := url.PathUnescape(u.String())
 		us, _ := url.PathUnescape(us1)
 		u2, _ := url.Parse(us)
-		db.URLs.Add(JSDecodeURI(TrimAnchor(u2.String())))
+		if u2 != nil {
+			db.URLs.Add(JSDecodeURI(TrimAnchor(u2.String())))
+		}
 
 	}
 
