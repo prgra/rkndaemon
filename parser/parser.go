@@ -122,6 +122,8 @@ func (db *DB) ParseEl(item Content) {
 		// для кривых урлов
 		db.URLs.Add(item.URL[i])
 		db.URLs.Add(JSDecodeURI(u.String()))
+		rstr := strings.ReplaceAll(u.String(), "%", "%25")
+		db.URLs.Add(rstr)
 
 	}
 
