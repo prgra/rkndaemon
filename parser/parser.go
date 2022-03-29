@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 	"sort"
+	"strings"
 
 	"golang.org/x/net/idna"
 )
@@ -115,6 +116,7 @@ func (db *DB) ParseEl(item Content) {
 
 		// для кривых урлов
 		db.URLs.Add(item.URL[i])
+		db.URLs.Add(JSDecodeURI(u.String()))
 
 	}
 
@@ -255,4 +257,15 @@ func (l List) MixWriteFilef(format string, fn string, lists ...List) error {
 
 func (l List) MixWriteFile(fn string, lists ...List) error {
 	return l.MixWriteFilef("%s", fn, lists...)
+}
+
+func JSDecodeURI(s string) (r string) {
+	r = s
+	r = strings.Replace(r, "%20", "+", -1)
+	r = strings.Replace(r, "!", "%21", -1)
+	r = strings.Replace(r, "'", "%27", -1)
+	r = strings.Replace(r, "(", "%28", -1)
+	r = strings.Replace(r, ")", "%29", -1)
+	r = strings.Replace(r, "*", "%2A", -1)
+	return r
 }
