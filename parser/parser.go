@@ -144,6 +144,7 @@ func (db *DB) ParseEl(item Content) {
 				item.BlockType == "domain" {
 				db.BlockedIPs.Add(ip.String())
 			}
+			db.URLs.Add("http://" + ip.String())
 		}
 	}
 
