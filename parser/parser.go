@@ -104,7 +104,7 @@ func (db *DB) ParseEl(item Content) {
 	}
 	https := false
 	for i := range item.URL {
-		u, err := url.Parse(item.URL[i])
+		u, err := url.Parse(strings.ToLower(item.URL[i]))
 		if err != nil {
 			continue
 		}
