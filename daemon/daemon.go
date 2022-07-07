@@ -285,6 +285,9 @@ func (a *App) SocialDownloader(i time.Duration) {
 	for {
 		res, err := a.Downloader.SOAP.Call("getResultSocResources", gosoap.Params{})
 		if err != nil {
+			if strings.HasPrefix(err.Error(), "XML syntax error") {
+				log.Println("are u add server IP to https://service.rkn.gov.ru/monitoring/vigruzka")
+			}
 			log.Fatalf("social download error: %s", err)
 		}
 		var r downloader.Resp
