@@ -7,3 +7,4 @@ rkndaemon
 rkndaemon.toml
 .DS_Store
 build
+.vscode
