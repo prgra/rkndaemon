@@ -225,7 +225,9 @@ func (a *App) DumpDownloader(i time.Duration) {
 		}
 		res, err := a.Downloader.SOAP.Call("getLastDumpDate", nil)
 		if err != nil {
-			log.Fatalf("Call getLastDumpDate: %s", err)
+			log.Printf("Call getLastDumpDate: %s", err)
+			time.Sleep(30 * time.Second)
+			continue
 		}
 		var rd downloader.GetdateRes
 		res.Unmarshal(&rd)
@@ -236,29 +238,41 @@ func (a *App) DumpDownloader(i time.Duration) {
 		dd = rd.Date
 		err = downloader.SaveDumpDate(dd)
 		if err != nil {
-			panic(err)
+			log.Println("can't save dumpdate", err)
+			time.Sleep(30 * time.Second)
+			continue
 		}
 		res, err = a.Downloader.SOAP.Call("getResult", gosoap.Params{})
 		if err != nil {
-			log.Fatalf("Call getResult: %s", err)
+			log.Printf("Call getResult: %s", err)
+			time.Sleep(30 * time.Second)
+			continue
 		}
 		var r downloader.Resp
 		res.Unmarshal(&r)
 		b, err := base64.StdEncoding.DecodeString(string(r.Zip))
 		if err != nil {
-			panic(err)
+			log.Println("can't unmarshal", err)
+			time.Sleep(30 * time.Second)
+			continue
 		}
 		fn, err := downloader.FindXMLInZipAndSave(b)
 		if err != nil {
-			panic(err)
+			log.Println("FindXMLInZipAndSave", err)
+			time.Sleep(30 * time.Second)
+			continue
 		}
 		err = a.ReadDumpFile(fn)
 		if err != nil {
 			log.Println("ReadDumpFile", err)
+			time.Sleep(30 * time.Second)
+			continue
 		}
 		err = a.Parser.WriteFiles("output")
 		if err != nil {
 			log.Println("WriteFiles", err)
+			time.Sleep(30 * time.Second)
+			continue
 		}
 
 		if a.Config.UseResolver {
