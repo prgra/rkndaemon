@@ -6,8 +6,6 @@ import (
 	"github.com/prgra/rkndaemon/daemon"
 )
 
-const ()
-
 func main() {
 	var cfg daemon.Config
 	err := cfg.Load()
