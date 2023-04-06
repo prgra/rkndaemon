@@ -73,8 +73,8 @@ func main() {
 	}()
 	out, err = cmd.CombinedOutput()
 	if err != nil {
-		log.Fatalln("read output problem", err)
 		fmt.Println("got output", string(out))
+		log.Fatalln("read output problem", err)
 	}
 
 	cmd = exec.Command("ipset", "-L", os.Args[2])
