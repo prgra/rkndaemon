@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"path"
 	"strconv"
 	"strings"
 	"sync"
@@ -302,26 +303,26 @@ func (a *App) SocialDownloader(i time.Duration) {
 			if strings.HasPrefix(err.Error(), "XML syntax error") {
 				log.Println("are u add server IP to https://service.rkn.gov.ru/monitoring/vigruzka")
 			}
-			log.Fatalf("social download error: %s", err)
+			log.Printf("social download error: %s", err)
 		}
 		var r downloader.Resp
 		res.Unmarshal(&r)
 		b, err := base64.StdEncoding.DecodeString(string(r.Zip))
 		if err != nil {
-			log.Fatalf("socialDecodeString: %s", err)
+			log.Printf("socialDecodeString: %s", err)
 		}
 		fn, err := downloader.FindXMLInZipAndSave(b)
 		if err != nil {
-			log.Fatalf("socialFindXMLInZipAndSave: %s", err)
+			log.Printf("socialFindXMLInZipAndSave: %s", err)
 		}
 		err = a.ReadSocialFile(fn)
 		if err != nil {
-			log.Fatalf("socialReadSocialFilee: %s", err)
+			log.Printf("socialReadSocialFilee: %s", err)
 		}
 
 		if a.Config.SocialScript != "" &&
-			strings.IndexAny(a.Config.SocialScript, "|;`*?") == -1 {
-			cmd := exec.Command(a.Config.SocialScript)
+			!strings.ContainsAny(a.Config.SocialScript, "|;`*?") {
+			cmd := exec.Command(path.Clean(a.Config.SocialScript))
 			out, err := cmd.CombinedOutput()
 			if err != nil {
 				log.Println("SocialScript", err)
