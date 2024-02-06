@@ -1,3 +1,4 @@
+// Package daemon for downloading and parsing RKN data
 package daemon
 
 import (
@@ -26,6 +27,7 @@ import (
 	"golang.org/x/text/encoding/charmap"
 )
 
+// App main application
 type App struct {
 	Downloader *downloader.Downloader
 	Resolver   *resolver.Resolver
@@ -34,6 +36,7 @@ type App struct {
 	waitGroup  *sync.WaitGroup
 }
 
+// Config for application
 type Config struct {
 	URL            string   `default:"http://vigruzki2.rkn.gov.ru/services/OperatorRequest2/?wsdl" toml:"rknurl" env:"URL"`
 	User           string   `toml:"rknuser" env:"USER"`
@@ -82,6 +85,7 @@ func (c *Config) Load() error {
 	return nil
 }
 
+// New create new application
 func New(c Config) (a *App, err error) {
 	dwn, err := downloader.New(c.URL)
 	if err != nil {
@@ -99,6 +103,7 @@ func New(c Config) (a *App, err error) {
 	}, nil
 }
 
+// Run application
 func (a *App) Run() {
 	if a.Config.UseDump {
 		a.waitGroup.Add(1)
@@ -112,7 +117,7 @@ func (a *App) Run() {
 	if a.Config.ListerHTTP != "" && !a.Config.Cron {
 		go func() {
 			log.Println("start http server on")
-			err := http.ListenAndServe(a.Config.ListerHTTP, a.AuthMiddleware(http.FileServer(http.Dir("output"))))
+			err := http.ListenAndServe(a.Config.ListerHTTP, a.AuthMiddleware(http.FileServer(http.Dir("output")))) // nolint
 			if err != nil {
 				log.Fatalf("can't listen http %v", err)
 			}
@@ -121,9 +126,10 @@ func (a *App) Run() {
 	a.waitGroup.Wait()
 }
 
+// ReadDumpFile read dump file and parse it
 func (a *App) ReadDumpFile(fn string) error {
 	log.Println("start read dumpfile")
-	xmlFile, err := os.Open(fn)
+	xmlFile, err := os.Open(path.Clean(fn))
 	if err != nil {
 		return err
 	}
@@ -170,22 +176,23 @@ func (a *App) ReadDumpFile(fn string) error {
 	return nil
 }
 
+// ReadSocialFile read social file and parse it
 func (a *App) ReadSocialFile(fn string) error {
 	log.Println("start read social")
-	xmlFile, err := os.Open(fn)
+	xmlFile, err := os.Open(path.Clean(fn))
 	if err != nil {
 		return err
 	}
 	defer xmlFile.Close()
 	xmlDec := xml.NewDecoder(xmlFile)
 	for {
-		t, err := xmlDec.Token()
+		t, xerr := xmlDec.Token()
 
 		if t == nil {
 			break
 		}
-		if err != nil {
-			return err
+		if xerr != nil {
+			return xerr
 		}
 		switch se := t.(type) {
 		case xml.StartElement:
@@ -212,11 +219,15 @@ func (a *App) ReadSocialFile(fn string) error {
 			a.Parser.ParseSoc(item)
 		}
 	}
-	a.Parser.WriteSocialFiles("output")
+	err = a.Parser.WriteSocialFiles("output")
+	if err != nil {
+		return err
+	}
 	log.Println("end read social file")
 	return nil
 }
 
+// DumpDownloader download dump
 func (a *App) DumpDownloader(i time.Duration) {
 	dd, _ := downloader.LoadDumpDate()
 	log.Println("loaded dumpdate", dd, time.Unix(int64(dd/1000), 0))
@@ -231,7 +242,12 @@ func (a *App) DumpDownloader(i time.Duration) {
 			continue
 		}
 		var rd downloader.GetdateRes
-		res.Unmarshal(&rd)
+		err = res.Unmarshal(&rd)
+		if err != nil {
+			log.Println("unmarshal", err)
+			time.Sleep(30 * time.Second)
+			continue
+		}
 		log.Println("got dump date", rd.Date, time.Unix(int64(dd/1000), 0))
 		if rd.Date == dd && !a.Config.Cron {
 			continue
@@ -250,7 +266,12 @@ func (a *App) DumpDownloader(i time.Duration) {
 			continue
 		}
 		var r downloader.Resp
-		res.Unmarshal(&r)
+		err = res.Unmarshal(&r)
+		if err != nil {
+			log.Println("unmarshal", err)
+			time.Sleep(30 * time.Second)
+			continue
+		}
 		b, err := base64.StdEncoding.DecodeString(string(r.Zip))
 		if err != nil {
 			log.Println("can't unmarshal", err)
@@ -280,8 +301,8 @@ func (a *App) DumpDownloader(i time.Duration) {
 			a.Resolve()
 		}
 		if a.Config.PostScript != "" &&
-			strings.IndexAny(a.Config.PostScript, "|;`*?") == -1 {
-			cmd := exec.Command(a.Config.PostScript)
+			!strings.ContainsAny(a.Config.PostScript, "|;`*?") {
+			cmd := exec.Command(path.Clean(a.Config.PostScript)) // nolint
 			out, err := cmd.CombinedOutput()
 			if err != nil {
 				log.Println("PostScript", err)
@@ -296,6 +317,7 @@ func (a *App) DumpDownloader(i time.Duration) {
 	a.waitGroup.Done()
 }
 
+// SocialDownloader download social resources
 func (a *App) SocialDownloader(i time.Duration) {
 	for {
 		res, err := a.Downloader.SOAP.Call("getResultSocResources", gosoap.Params{})
@@ -306,7 +328,10 @@ func (a *App) SocialDownloader(i time.Duration) {
 			log.Printf("social download error: %s", err)
 		}
 		var r downloader.Resp
-		res.Unmarshal(&r)
+		err = res.Unmarshal(&r)
+		if err != nil {
+			log.Printf("socialUnmarshal: %s", err)
+		}
 		b, err := base64.StdEncoding.DecodeString(string(r.Zip))
 		if err != nil {
 			log.Printf("socialDecodeString: %s", err)
@@ -322,7 +347,7 @@ func (a *App) SocialDownloader(i time.Duration) {
 
 		if a.Config.SocialScript != "" &&
 			!strings.ContainsAny(a.Config.SocialScript, "|;`*?") {
-			cmd := exec.Command(path.Clean(a.Config.SocialScript))
+			cmd := exec.Command(path.Clean(a.Config.SocialScript)) // nolint
 			out, err := cmd.CombinedOutput()
 			if err != nil {
 				log.Println("SocialScript", err)
@@ -340,6 +365,7 @@ func (a *App) SocialDownloader(i time.Duration) {
 	a.waitGroup.Done()
 }
 
+// Resolve all domains from parser
 func (a *App) Resolve() {
 	log.Printf("start resolving on %d workers", a.Config.WorkerCount)
 	t := time.Now()
