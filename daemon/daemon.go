@@ -38,7 +38,7 @@ type App struct {
 
 // Config for application
 type Config struct {
-	URL            string   `default:"http://vigruzki2.rkn.gov.ru/services/OperatorRequest2/?wsdl" toml:"rknurl" env:"URL"`
+	URL            string   `default:"https://vigruzki2.rkn.gov.ru/services/OperatorRequest2/?wsdl" toml:"rknurl" env:"URL"`
 	User           string   `toml:"rknuser" env:"USER"`
 	Pass           string   `toml:"rknpass" env:"PASS"`
 	DNSServers     []string `default:"[8.8.8.8],[1.1.1.1]" toml:"dnses" env:"DNSSERVERS"`
@@ -58,7 +58,7 @@ type Config struct {
 
 // Load configuration
 func (c *Config) Load() error {
-	loader := aconfig.LoaderFor(&c, aconfig.Config{
+	loader := aconfig.LoaderFor(c, aconfig.Config{
 		SkipFlags: true,
 		EnvPrefix: "RKN",
 		Files: []string{
@@ -326,6 +326,8 @@ func (a *App) SocialDownloader(i time.Duration) {
 				log.Println("are u add server IP to https://service.rkn.gov.ru/monitoring/vigruzka")
 			}
 			log.Printf("social download error: %s", err)
+			time.Sleep(30 * time.Second)
+			continue
 		}
 		var r downloader.Resp
 		err = res.Unmarshal(&r)
